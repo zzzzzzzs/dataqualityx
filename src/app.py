@@ -62,7 +62,7 @@ def symbol_proc(x, y):
 
 
 # 对比结果
-def compareResult(actual, file_name, sql, task):
+def compareResult(actual, file_name, sql, task, args):
     if len(actual) != len(task['expected']):
         raise Exception(f'{file_name} 中的 {task["sql"]} 期望是 {len(task["expected"])} 行，但实际是 {len(actual)} 行')
     exps = operator(task['expected'])
@@ -75,6 +75,7 @@ def compareResult(actual, file_name, sql, task):
         if calc_res == False:
             err_info = f'错误xxx: 文件:{file_name} 中的 {sql} 计算出问题了, 实际结果是 {actual}, 但期望是 {task["expected"]}'
             print_color_text(err_info, 'red')
+            if 'none' in args.alerts: continue
             if task['alerts'] is not None:
                 for alert in task['alerts']:
                     alert = alert['alert']
@@ -85,13 +86,13 @@ def compareResult(actual, file_name, sql, task):
 
 
 # 读取 yaml 中的数据
-def read_yaml(arg_files):
+def read_yaml(args):
     current_path = os.path.abspath(".")
     yaml_path = os.path.join(current_path, "../task")
     infos = []
     for filename in os.listdir(yaml_path):
         # 支持命令行指定文件,如果不写就是全部
-        if arg_files is None or filename in arg_files:
+        if args.files is None or filename in args.files:
             if filename.endswith('.yaml'):
                 with open(os.path.join(yaml_path, filename), encoding='utf-8') as f:
                     yaml_data = yaml.safe_load(f)
@@ -110,7 +111,7 @@ def handle_sql(sql, vars):
 
 
 # 处理 yaml 逻辑
-def process(infos):
+def process(infos, args):
     # infos -> 多个文件
     for info in infos:
         if info['db'] is None:
@@ -123,15 +124,16 @@ def process(infos):
                 raise Exception(f'{info["file_name"]} 中 sql 部分不能为空')
             sql = handle_sql(task['sql'], info['vars'])
             actualRes = DbUtil.query(cur, sql)
-            compareResult(actualRes, info["file_name"], sql, task)
+            compareResult(actualRes, info["file_name"], sql, task, args)
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', dest='files', nargs='+', help='YAML files to process')
+    parser.add_argument('--files', dest='files', nargs='+', help='YAML files to process')
+    parser.add_argument('--alerts', dest='alerts', nargs='+', help='YAML alerts to process')
     args = parser.parse_args()
-    yaml_infos = read_yaml(args.files)
-    process(yaml_infos)
+    yaml_infos = read_yaml(args)
+    process(yaml_infos, args)
 
 
 if __name__ == '__main__':
