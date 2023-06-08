@@ -75,7 +75,7 @@ def compareResult(actual, file_name, sql, task, args):
         if calc_res == False:
             err_info = f'错误xxx: 文件:{file_name} 中的 {sql} 计算出问题了, 实际结果是 {actual}, 但期望是 {task["expected"]}'
             print_color_text(err_info, 'red')
-            if 'none' in args.alerts: continue
+            if args.alerts is not None and 'none' in args.alerts: continue
             if task['alerts'] is not None:
                 for alert in task['alerts']:
                     alert = alert['alert']
@@ -87,12 +87,21 @@ def compareResult(actual, file_name, sql, task, args):
 
 # 读取 yaml 中的数据
 def read_yaml(args):
-    current_path = os.path.abspath(".")
-    yaml_path = os.path.join(current_path, "../task")
+    if args.files is None:
+        raise Exception(f'请指定脚本路径, 例如 --files /home/user/xxx')
+    yaml_path = args.files
     infos = []
-    for filename in os.listdir(yaml_path):
-        # 支持命令行指定文件,如果不写就是全部
-        if args.files is None or filename in args.files:
+    # 检查指定路径是文件还是文件夹
+    if os.path.isfile(yaml_path):
+        # 如果是文件，则读取文件内容
+        with open(yaml_path, encoding='utf-8') as f:
+            yaml_data = yaml.safe_load(f)
+            yaml_data['file_name'] = os.path.basename(yaml_path)
+            infos.append(yaml_data)
+    else:
+        # 如果是文件夹，则列出文件夹中的所有文件/文件夹名称
+        for filename in os.listdir(yaml_path):
+            # 支持命令行指定文件,如果不写就是全部
             if filename.endswith('.yaml'):
                 with open(os.path.join(yaml_path, filename), encoding='utf-8') as f:
                     yaml_data = yaml.safe_load(f)
@@ -129,7 +138,7 @@ def process(infos, args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--files', dest='files', nargs='+', help='YAML files to process')
+    parser.add_argument('--files', dest='files', help='YAML files to process')
     parser.add_argument('--alerts', dest='alerts', nargs='+', help='YAML alerts to process')
     args = parser.parse_args()
     yaml_infos = read_yaml(args)
