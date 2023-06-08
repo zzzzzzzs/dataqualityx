@@ -1,9 +1,9 @@
 import yaml
 import os
-import DateUtil
 import argparse
-import AlterUtil
-import DbUtil
+from dataqualityx import DateUtil
+from dataqualityx import AlterUtil
+from dataqualityx import DbUtil
 
 
 def print_color_text(text, color):
@@ -72,6 +72,7 @@ def compareResult(actual, file_name, sql, task, args):
         if len(x) > 1:
             raise Exception(f'目前只支持校验一个字段值，文件: {file_name}')
         calc_res = symbol_proc(x[0], y)
+        print('--' * 30)
         if calc_res == False:
             err_info = f'错误xxx: 文件:{file_name} 中的 {sql} 计算出问题了, 实际结果是 {actual}, 但期望是 {task["expected"]}'
             print_color_text(err_info, 'red')
@@ -82,7 +83,6 @@ def compareResult(actual, file_name, sql, task, args):
                     AlterUtil.alter(alert['type'], err_info, alert['url'])
         else:
             print(f'文件:{file_name} 中的 {sql} 与期望值相同')
-        print('--------------------------------------------')
 
 
 # 读取 yaml 中的数据

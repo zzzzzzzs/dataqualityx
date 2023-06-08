@@ -8,7 +8,7 @@ from setuptools import find_packages, setup
 
 from dataqualityx import NAME, VERSION
 
-with open("README.md", "r") as f:
+with open("README.md", "r", encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
