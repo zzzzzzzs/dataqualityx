@@ -59,6 +59,6 @@ tasks:
 - [x] doris
 - [ ] hive
 - [ ] clickhouse
-- [ ] clickhouse
+- [ ] oracle
 - [ ] postgresql
 
